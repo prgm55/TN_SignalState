@@ -7,7 +7,7 @@
 
 ## Usage
 
-As for the push button circuit, please refer to the [link (arduino tutorial)](https://www.arduino.cc/en/tutorial/button).
+プッシュボタン回路の例 [link (arduino tutorial)](https://www.arduino.cc/en/tutorial/button).
 
 ```cpp
 #include <TN_SignalState.h>
