@@ -1,35 +1,15 @@
-
-
 #include "TN_SignalState.h"
+
 TN_Signal::TN_Signal() {
   Init();
 }
 
 
-//TN_Signal::TN_Signal() : TN_Signal::TN_Signal(false) {}
-//
-//TN_Signal::TN_Signal(boolean is_toggle) : is_toggle_{is_toggle}
-//{
-//    Init();
-//}
-
 void TN_Signal::Init()
 {
     tn_state_ = Idring();
-    // if (is_toggle_)
-    // {
-    //     tn_state_ = ToggleOff();
-    // }
-    // else
-    // {
-    //     tn_state_ = Idring();
-    // }
-
 }
 
-/**
- * 
-**/
 TnSignalState TN_Signal::GiveSignal(boolean is_high)
 {
     /* Low-pass filter to prevent chattering */
@@ -50,45 +30,51 @@ TN_State *TN_Signal::Idring() const
     return &state;
 }
 
-TN_State *TN_Signal::SinglePress() const
+TN_State *TN_Signal::FirstPress() const
 {
-    static SinglePressState state;
+    static FirstPressState state;
     return &state;
 }
 
-TN_State *TN_Signal::SingleHold() const
+TN_State *TN_Signal::FirstHold() const
 {
-    static SingleHoldState state;
+    static FirstHoldState state;
     return &state;
 }
 
-TN_State *TN_Signal::SingleRelease() const
+TN_State *TN_Signal::FirstRelease() const
 {
-    static SingleReleaseState state;
+    static FirstReleaseState state;
     return &state;
 }
 
-TN_State *TN_Signal::DoubleIdring() const
+TN_State *TN_Signal::SecondIdring() const
 {
-    static DoubleIdringState state;
+    static SecondIdringState state;
     return &state;
 }
 
-TN_State *TN_Signal::DoublePress() const
+TN_State *TN_Signal::SecondPress() const
 {
-    static DoublePressState state;
+    static SecondPressState state;
     return &state;
 }
 
-TN_State *TN_Signal::DoubleHold() const
+TN_State *TN_Signal::SecondHold() const
 {
-    static DoubleHoldState state;
+    static SecondHoldState state;
     return &state;
 }
 
-TN_State *TN_Signal::DoubleRelease() const
+TN_State *TN_Signal::SecondRelease() const
 {
-    static DoubleReleaseState state;
+    static SecondReleaseState state;
+    return &state;
+}
+
+TN_State *TN_Signal::ThirdIdring() const
+{
+    static ThirdIdringState state;
     return &state;
 }
 
@@ -123,26 +109,26 @@ void IdringState::GiveSignal(boolean is_high, TN_Signal *ctx)
 {
     if (is_high)
     {
-        ctx->set_tn_state(ctx->SinglePress()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->FirstPress()); /* 状態遷移 */
     }
 }
 
 /* 1回目のシグナルが立ち上がった状態 */
-void SinglePressState::GiveSignal(boolean is_high, TN_Signal *ctx)
+void FirstPressState::GiveSignal(boolean is_high, TN_Signal *ctx)
 {
     if (is_high)
     {
         ctx->set_start_time(millis());        /* start timing measurement */
-        ctx->set_tn_state(ctx->SingleHold()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->FirstHold()); /* 状態遷移 */
     }
     else
     {
-        ctx->set_tn_state(ctx->SingleRelease()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->FirstRelease()); /* 状態遷移 */
     }
 }
 
 /* 1回目のシグナルが立ち続けている状態 */
-void SingleHoldState::GiveSignal(boolean is_high, TN_Signal *ctx)
+void FirstHoldState::GiveSignal(boolean is_high, TN_Signal *ctx)
 {
     uint32_t start = ctx->start_time();
     uint32_t long_press = ctx->long_press_time();
@@ -156,33 +142,33 @@ void SingleHoldState::GiveSignal(boolean is_high, TN_Signal *ctx)
     }
     else
     {
-        ctx->set_tn_state(ctx->SingleRelease()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->FirstRelease()); /* 状態遷移 */
     }
 }
 
 /* 1回目のシグナルが落ちた状態 */
-void SingleReleaseState::GiveSignal(boolean is_high, TN_Signal *ctx)
+void FirstReleaseState::GiveSignal(boolean is_high, TN_Signal *ctx)
 {
     if (is_high)
     {
-        ctx->set_tn_state(ctx->DoublePress()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->SecondPress()); /* 状態遷移 */
     }
     else
     {
         ctx->set_start_time(millis());          /* タイマーのリセット */
-        ctx->set_tn_state(ctx->DoubleIdring()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->SecondIdring()); /* 状態遷移 */
     }
 }
 
 /* 2回目のシグナルの待機状態 */
-void DoubleIdringState::GiveSignal(boolean is_high, TN_Signal *ctx)
+void SecondIdringState::GiveSignal(boolean is_high, TN_Signal *ctx)
 {
     uint32_t start = ctx->start_time();
-    uint32_t double_click = ctx->double_press_time();
+    uint32_t double_click = ctx->second_press_time();
 
     if (is_high)
     {
-        ctx->set_tn_state(ctx->DoublePress()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->SecondPress()); /* 状態遷移 */
     }
     else
     {
@@ -194,21 +180,21 @@ void DoubleIdringState::GiveSignal(boolean is_high, TN_Signal *ctx)
 }
 
 /* 2回目のシグナルが立ち上がった状態 */
-void DoublePressState::GiveSignal(boolean is_high, TN_Signal *ctx)
+void SecondPressState::GiveSignal(boolean is_high, TN_Signal *ctx)
 {
     if (is_high)
     {
         ctx->set_start_time(millis());        /* タイマーのリセット */
-        ctx->set_tn_state(ctx->DoubleHold()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->SecondHold()); /* 状態遷移 */
     }
     else
     {
-        ctx->set_tn_state(ctx->DoubleRelease()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->SecondRelease()); /* 状態遷移 */
     }
 }
 
 /* 2回目のシグナルが立ち続けている状態 */
-void DoubleHoldState::GiveSignal(boolean is_high, TN_Signal *ctx)
+void SecondHoldState::GiveSignal(boolean is_high, TN_Signal *ctx)
 {
     uint32_t start = ctx->start_time();
     uint32_t long_press = ctx->long_press_time();
@@ -222,24 +208,44 @@ void DoubleHoldState::GiveSignal(boolean is_high, TN_Signal *ctx)
     }
     else
     {
-        ctx->set_tn_state(ctx->DoubleRelease()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->SecondRelease()); /* 状態遷移 */
     }
 }
 
 /* 2回目のシグナルが落ちた状態 */
-void DoubleReleaseState::GiveSignal(boolean is_high, TN_Signal *ctx)
+void SecondReleaseState::GiveSignal(boolean is_high, TN_Signal *ctx)
 {
     uint32_t start = ctx->start_time();
     uint32_t long_press = ctx->long_press_time();
 
     if (is_high)
     {
-        ctx->set_tn_state(ctx->DoublePress()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->SecondPress()); /* 状態遷移 */
     }
     else
     {
         // ctx->set_tn_state(ctx->Idring()); /* 状態遷移 */
-        ctx->set_tn_state(ctx->DoubleIdring()); /* 状態遷移 */
+        ctx->set_start_time(millis());          /* タイマーのリセット */
+        ctx->set_tn_state(ctx->ThirdIdring()); /* 状態遷移 */
+    }
+}
+
+/* 3回目のシグナルの待機状態 */
+void ThirdIdringState::GiveSignal(boolean is_high, TN_Signal *ctx)
+{
+    uint32_t start = ctx->start_time();
+    uint32_t double_click = ctx->second_press_time();
+
+    if (is_high)
+    {
+        ctx->set_tn_state(ctx->SecondPress()); /* 状態遷移 */
+    }
+    else
+    {
+        if (millis() - start > double_click)
+        {
+            ctx->set_tn_state(ctx->Idring()); /* 状態遷移 */
+        }
     }
 }
 
@@ -275,7 +281,7 @@ void LongReleaseState::GiveSignal(boolean is_high, TN_Signal *ctx)
 
     if (is_high)
     {
-        ctx->set_tn_state(ctx->SinglePress()); /* 状態遷移 */
+        ctx->set_tn_state(ctx->FirstPress()); /* 状態遷移 */
     }
     else
     {
