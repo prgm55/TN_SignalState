@@ -12,7 +12,7 @@ void TN_Signal::Init()
 
 TnSignalState TN_Signal::GiveSignal(boolean is_high)
 {
-    /* Low-pass filter to prevent chattering */
+    /* チャタリング対策の簡易的なローパスフィルタ */
     if(millis() - receipt_time_ > chatter_time_){
         tn_state_->GiveSignal(is_high, this);
         receipt_time_ = millis();
