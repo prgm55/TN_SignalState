@@ -118,7 +118,7 @@ void FirstPressState::GiveSignal(boolean is_high, TN_Signal *ctx)
 {
     if (is_high)
     {
-        ctx->set_start_time(millis());        /* start timing measurement */
+        ctx->set_start_time(millis());       /* タイマーのリセット */
         ctx->set_tn_state(ctx->FirstHold()); /* 状態遷移 */
     }
     else
